@@ -15,6 +15,9 @@ import csv
 import numpy as np
 import ntpath
 import os
+from face_recognition_rt import FaceRecognition
+from tkinter import simpledialog
+import pandas as pd
 
 active_page = 0
 thread_event = None
@@ -531,25 +534,27 @@ def getPage4(path):
     thread.start()
 
 def getPage3():
-    global active_page, video_loop, left_frame, right_frame, thread_event, heading
-    active_page = 3
-    pages[3].lift()
+    # global active_page, video_loop, left_frame, right_frame, thread_event, heading
+    # active_page = 3
+    # pages[3].lift()
 
-    basicPageSetup(3)
-    heading.configure(text="Video Surveillance")
+    # basicPageSetup(3)
+    # heading.configure(text="Video Surveillance")
 
-    btn_grid = tk.Frame(left_frame,bg="#3E3B3C")
-    btn_grid.pack()
+    # btn_grid = tk.Frame(left_frame,bg="#3E3B3C")
+    # btn_grid.pack()
 
-    tk.Button(btn_grid, text="Select Video", command=selectvideo, font="Arial 15 bold", padx=20, bg="#000000",
-                fg="white", pady=10, bd=0, highlightthickness=0, activebackground="#3E3B3C",
-                activeforeground="white").grid(row=0, column=0, padx=25, pady=25)
+    # tk.Button(btn_grid, text="Select Video", command=selectvideo, font="Arial 15 bold", padx=20, bg="#000000",
+    #             fg="white", pady=10, bd=0, highlightthickness=0, activebackground="#3E3B3C",
+    #             activeforeground="white").grid(row=0, column=0, padx=25, pady=25)
     
     
 
     # tk.Button(btn_grid, text="Recognize", command=getPage3(), font="Arial 15 bold", padx=20, bg="#000000",
     #        fg="white", pady=10, bd=0, highlightthickness=0, activebackground="#3E3B3C",
     #        activeforeground="white").grid(row=0, column=1, padx=25, pady=25)
+    app = FaceRecognition()
+    app.run()
 
 
 def selectvideo():
@@ -591,7 +596,59 @@ def selectvideo():
 #            fg="white", pady=10, bd=0, highlightthickness=0, activebackground="#3E3B3C",
 #            activeforeground="white").grid(row=0, column=1, padx=25, pady=25)
 
-def selectvideo1():
+def fetch_criminal_details():
+    """
+    Fetch details of a criminal based on the name entered by the user and display the details with an image.
+    """
+    try:
+        name = simpledialog.askstring("Input", "Enter the name of the person:")
+        if not name:
+            return
+
+        # Load data from the CSV file
+        criminals_data = pd.read_csv('Criminal.csv')
+
+        # Find the matching row
+        matching_row = criminals_data[criminals_data['Name'].str.lower() == name.lower()]
+        if not matching_row.empty:
+            # Get the details and the image path
+            details = matching_row.iloc[0].to_dict()
+            image_path = details.get("ImagePath", None)
+
+            # Create a new popup window to display details and the image
+            result_window = tk.Toplevel()
+            result_window.title(f"Criminal Details - {details['Name']}")
+            result_window.geometry("800x600")
+            result_window.configure(bg="#3E3B3C")
+
+            # Display text details
+            details_text = "\n".join([f"{key}: {value}" for key, value in details.items() if key != "ImagePath"])
+            text_label = tk.Label(result_window, text=details_text, font=("Arial", 16), bg="#3E3B3C", fg="white")
+            text_label.pack(pady=20)
+
+            # Display the image (if available)
+            if image_path:
+                try:
+                    image = Image.open(image_path)
+                    image = image.resize((300, 300), Image.ANTIALIAS)  # Resize image
+                    photo = ImageTk.PhotoImage(image)
+                    image_label = tk.Label(result_window, image=photo, bg="#3E3B3C")
+                    image_label.image = photo  # Keep a reference to avoid garbage collection
+                    image_label.pack(pady=20)
+                except FileNotFoundError:
+                    messagebox.showerror("Error", f"Image file not found: {image_path}")
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to load image: {str(e)}")
+            else:
+                tk.Label(result_window, text="No image available", font=("Arial", 14), bg="#3E3B3C", fg="white").pack(pady=20)
+        else:
+            messagebox.showinfo("No Match", f"No criminal details found for '{name}'.")
+    except FileNotFoundError:
+        messagebox.showerror("Error", "The file 'criminals.csv' was not found.")
+    except Exception as e:
+        messagebox.showerror("Error", f"An unexpected error occurred: {str(e)}")
+
+'''def selectvideo1():
     # global left_frame, img_label, img_read
     # for wid in right_frame.winfo_children():
     #     wid.destroy()
@@ -604,7 +661,7 @@ def selectvideo1():
     if(len(path) > 0):
         # vid_read = cv2.imread(path)
         # print(vid_read)
-       detect(p)
+       detect(p)'''
 
 ######################################## Home Page ####################################
 tk.Label(pages[0], text="Face Recognition System for Criminal Detection", fg="black", bg="#3E3B3C",
@@ -616,9 +673,9 @@ tk.Label(pages[0], image=logo, bg="#3E3B3C").pack(side='left')
 btn_frame = tk.Frame(pages[0], bg="#3E3B3C", pady=30)
 btn_frame.pack()
 
-tk.Button(btn_frame, text="Input Video", command=selectvideo1)
+#tk.Button(btn_frame, text="Input Video", command=selectvideo1)
 tk.Button(btn_frame, text="Add Criminal Details", command=getPage1)
-tk.Button(btn_frame, text="Image Surveillance", command=getPage2)
+tk.Button(btn_frame, text="Find Details", command=fetch_criminal_details)
 tk.Button(btn_frame, text="Video Surveillance", command=getPage3)
 
 
