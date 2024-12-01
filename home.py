@@ -17,7 +17,7 @@ import ntpath
 import os
 from face_recognition_rt import FaceRecognition
 from tkinter import simpledialog
-import pandas as pd
+import face_recogintion
 
 active_page = 0
 thread_event = None
@@ -34,6 +34,13 @@ current_slide = -1
 
 root = tk.Tk()
 root.geometry("1000x900+200+100")
+
+
+def write_details_to_csv(entry,image):
+    with open('criminals.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        encoding = face_recognition.face_encodings(image)[0]
+        writer.writerow(entry,encoding)
 
 # create Pages
 pages = []
